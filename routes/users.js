@@ -1,30 +1,44 @@
 const express = require("express");
 const router = express.Router();
-const Joi = require("joi");
-const usersStore = require("../store/users");
+const multer = require("multer");
+const bcrypt = require("bcrypt");
+const _ = require("lodash");
+
+const { schema, User } = require("../models/User");
 const validateWith = require("../middleware/validation");
+const imageResize = require("../middleware/imageResize");
 
-const schema = {
-  name: Joi.string().required().min(2),
-  email: Joi.string().email().required(),
-  password: Joi.string().required().min(5),
-};
+const upload = multer({
+  dest: "userAvatars/",
+  limits: { fieldSize: 25 * 1024 * 1024, files: 1 },
+});
 
-router.post("/", validateWith(schema), (req, res) => {
-  const { name, email, password } = req.body;
-  if (usersStore.getUserByEmail(email))
+// Registering a new user.
+router.post("/", [validateWith(schema)], async (req, res) => {
+  const { username, email, password } = req.body;
+  let user = await User.findOne({ email: email });
+  if (user)
     return res
       .status(400)
       .send({ error: "A user with the given email already exists." });
 
-  const user = { name, email, password };
-  usersStore.addUser(user);
+  user = new User({ username, email, password });
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(user.password, salt);
+  await user.save();
 
-  res.status(201).send(user);
+  res.send(_.pick(user, ["_id", "username", "email"]));
 });
 
-router.get("/", (req, res) => {
-  res.send(usersStore.getUsers());
+// TODO: Delete it
+router.get("/", async (req, res) => {
+  let users;
+  try {
+    users = await User.find().select("-password");
+  } catch (e) {
+    res.status(401).send(e.message);
+  }
+  res.send(users);
 });
 
 module.exports = router;

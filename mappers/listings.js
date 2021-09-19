@@ -7,9 +7,10 @@ const mapper = listing => {
     thumbnailUrl: `${baseUrl}${image.fileName}_thumb.jpg`
   });
 
+
   return {
-    ...listing,
-    images: listing.images.map(mapImage)
+    ...listing._doc,    // TODO: learn why spreading the listing object shows additional data
+    images: listing._doc.images.map(mapImage)
   };
 };
 

@@ -11,6 +11,12 @@ const categorieSchema = new mongoose.Schema([
       maxlength: 7,
       minlength: 7,
     },
+    color: {
+      type: String,
+      required: false,
+      minlength: 3,
+      maxlength: 10,
+    },
   },
 ]);
 
@@ -21,7 +27,9 @@ const validateCategory = (category) => {
     name: Joi.string().min(3).max(50).required(),
     icon: Joi.string().min(3).max(50),
     backgroundColor: Joi.string().min(7).max(7),
+    color: Joi.string().min(3).max(10),
   });
+  return schema.validate(category);
 };
 
 exports.Category = Category;

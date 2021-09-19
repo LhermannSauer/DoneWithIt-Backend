@@ -1,12 +1,16 @@
 const express = require("express");
-const delay = require("../middleware/delay");
-const { Category } = require("../models/categories");
+const { Category } = require("../models/Category");
 const router = express.Router();
 
-router.get("/", delay, async (req, res) => {
-  console.log("Accessing Database...");
+router.get("/", async (req, res) => {
   const categories = await Category.find().sort("name");
   res.send(categories);
+});
+
+router.get("/:id", async (req, res) => {
+  const category = await Category.findById(req.params.id);
+  if (!category) return res.status(404).send("Category not found");
+  res.send(category);
 });
 
 module.exports = router;
